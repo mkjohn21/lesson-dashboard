@@ -424,7 +424,9 @@ body { padding:24px 16px 48px; }
     status.textContent = '불러오는 중…';
     status.classList.remove('sd-err');
     try {
-      const r = await fetch('/api/data' + (refresh ? '?refresh=1' : ''), { cache: 'no-store' });
+      const kk = new URLSearchParams(location.search).get('key');
+      const qs = [refresh ? 'refresh=1' : '', kk ? 'key=' + encodeURIComponent(kk) : ''].filter(Boolean).join('&');
+      const r = await fetch('/api/data' + (qs ? '?' + qs : ''), { cache: 'no-store' });
       if (!r.ok) throw new Error((await r.text()).slice(0, 200) || r.status);
       DATA = await r.json();
       drawAll();

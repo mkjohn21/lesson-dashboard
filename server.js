@@ -58,6 +58,8 @@ http
     try {
       const url = new URL(req.url, 'http://x');
       if (url.pathname === '/ping') return send(res, 200, 'ok');
+      // d3는 공개 라이브러리라 키 없이 내려준다(임베드에서 쿠키 없이도 화면이 뜨도록).
+      if (url.pathname === '/d3.min.js') return file(res, path.join(__dirname, 'node_modules', 'd3', 'dist', 'd3.min.js'), 'application/javascript');
 
       const cookies = Object.fromEntries((req.headers.cookie || '').split(/;\s*/).filter(Boolean).map((c) => { const i = c.indexOf('='); return [c.slice(0, i), c.slice(i + 1)]; }));
       const given = url.searchParams.get('key') || req.headers['x-dashboard-key'];
@@ -68,7 +70,9 @@ http
         return isApi ? send(res, 401, '{"error":"unauthorized"}', 'application/json') : send(res, 401, '접근 권한이 없습니다. 주소 끝에 ?key=... 를 붙여 열어 주세요.');
       }
       // 주소의 키는 쿠키로 바꾸고 주소창에서 지운다.
-      if (keyOk && url.searchParams.has('key') && !isApi) {
+      // 노션 임베드(iframe)에서는 쿠키가 막히므로 키를 주소에 그대로 두고, 화면이 같은 키로 데이터를 요청한다.
+      const framed = req.headers['sec-fetch-dest'] === 'iframe' || url.searchParams.has('embed');
+      if (keyOk && url.searchParams.has('key') && !isApi && !framed) {
         const secure = req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : '';
         url.searchParams.delete('key');
         return send(res, 302, '', 'text/plain', {
@@ -85,7 +89,6 @@ http
         const d = await getData(true);
         return send(res, 200, JSON.stringify({ ok: !d.stale, updatedAt: new Date(d.at).toISOString() }), 'application/json');
       }
-      if (url.pathname === '/d3.min.js') return file(res, path.join(__dirname, 'node_modules', 'd3', 'dist', 'd3.min.js'), 'application/javascript');
       if (url.pathname === '/' || url.pathname === '/index.html') return file(res, path.join(__dirname, 'public', 'index.html'), 'text/html; charset=utf-8');
       return send(res, 404, 'not found');
     } catch (e) {
