@@ -76,20 +76,20 @@ body { padding:24px 16px 48px; }
   </div>
 
   <div class="sd-card">
-    <details class="sd-sec" open><summary><h2>수강 인원</h2></summary>
+    <details class="sd-sec"><summary><h2>수강 인원</h2></summary>
     <p class="sd-note">월별은 그 달, 주별은 그 주(월~일)에 수강 기간이 걸친 학생 수입니다. 다음 달(주)부터는 수업기록의 예정 수업이 있는 학생 수이며 점선으로 표시합니다. 학원이 바뀐 학생은 학원별로 각각 세고, 합계에서는 한 번만 셉니다. 범례의 '월 평균'을 켜면 그 달의 주별 평균이 진한 계단선으로 나타나고 주별 선은 옅어집니다. 범례를 누르면 선을 켜고 끌 수 있고, 두 손가락 벌리기·트랙패드 핀치(마우스는 Ctrl+휠)로 확대하고, 드래그나 트랙패드 두 손가락 좌우로 이동합니다.</p></details>
     <div class="sd-chart" data-draw="chart_headcount" data-source="headcount"></div>
   </div>
 
   <div class="sd-card">
-      <details class="sd-sec" open><summary><h2>수업 시간</h2></summary>
+      <details class="sd-sec"><summary><h2>수업 시간</h2></summary>
       <p class="sd-note">유효 수업(딜레이·당결·전달사항 제외) 기준입니다. 이번 달(주)과 이후는 예정 수업을 포함하므로 점선으로 이어 표시합니다. 범례의 '월 평균'을 켜면 그 달의 주별 평균이 진한 계단선으로 나타나고 주별 선은 옅어집니다. 범례를 누르면 선을 켜고 끌 수 있고, 두 손가락 벌리기·트랙패드 핀치(마우스는 Ctrl+휠)로 확대하고, 드래그나 트랙패드 두 손가락 좌우로 이동합니다.</p></details>
       <div class="sd-chart" data-draw="chart_hours" data-source="hours"></div>
     </div>
 
   <div class="sd-grid">
     <div class="sd-card">
-      <details class="sd-sec" open><summary><h2>학원별 진행 중 인원</h2></summary>
+      <details class="sd-sec"><summary><h2>학원별 진행 중 인원</h2></summary>
       <p class="sd-note">인원은 종료일이 비어 있는 기수 기준입니다. 시간은 그 학생들에 연결된 '진행 중' 급여정보를 기준으로, 주 시간은 주당시간의 합, 월 시간은 4주로 계산합니다.</p></details>
       <table data-source="now" data-row-key="academy">
         <thead><tr><th data-field="academy">학원</th><th data-field="students">인원</th><th>주 시간</th><th>월 시간</th></tr></thead>
