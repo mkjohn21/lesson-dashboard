@@ -57,7 +57,7 @@ http
   .createServer(async (req, res) => {
     try {
       const url = new URL(req.url, 'http://x');
-      if (url.pathname === '/healthz') return send(res, 200, 'ok');
+      if (url.pathname === '/ping') return send(res, 200, 'ok');
 
       const cookies = Object.fromEntries((req.headers.cookie || '').split(/;\s*/).filter(Boolean).map((c) => { const i = c.indexOf('='); return [c.slice(0, i), c.slice(i + 1)]; }));
       const given = url.searchParams.get('key') || req.headers['x-dashboard-key'];
