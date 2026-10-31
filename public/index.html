@@ -49,6 +49,12 @@ body { padding:24px 16px 48px; }
 .sd-err { color:#c0392b; }
 header { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
 header .sd-sub, header .sd-status, header .sd-seg { margin: 0; }
+
+.sd-tiles { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); gap: var(--cds-gap-sm, 8px); }
+.sd-tiles .sd-card { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 12px; }
+.sd-tiles .sd-lab { white-space: nowrap; }
+.sd .sd-tiles .sd-big { font-size: 1.35rem; line-height: 1.2; white-space: nowrap; }
+.sd-tiles .sd-unit { font-size: var(--cds-font-size-caption); margin-left: 2px; }
 </style>
 </head><body>
 <div class="sd">
