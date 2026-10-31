@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>수강 현황</title>
+<style>
+.sd { display: flex; flex-direction: column; gap: var(--cds-gap-lg); font-family: var(--font-anthropic-sans); max-width: 72rem; margin-inline: auto; }
+.sd h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; }
+.sd .sd-sub { margin: 4px 0 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-body); }
+.sd-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--cds-gap-md); }
+.sd-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); min-width: 0; }
+.sd-card h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.sd-note { margin: 2px 0 var(--cds-gap-md); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.sd-lab { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.sd .sd-big { display: block; font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 2.25rem; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.sd-unit { font-size: var(--cds-font-size-body); color: var(--color-fg-muted); margin-left: 4px; }
+.sd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: var(--cds-gap-md); }
+.sd-chart { position: relative; min-height: 260px; }
+.sd-chart svg { display: block; width: 100%; height: auto; }
+.sd-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.sd-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.sd-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; z-index: 2; }
+.sd-tip .t { color: var(--cds-text-secondary); }
+.sd-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+.sd table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.sd th, .sd td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--color-border-line); font-size: var(--cds-font-size-body); }
+.sd th { color: var(--color-fg-muted); font-weight: var(--cds-font-weight-medium); font-size: var(--cds-font-size-caption); }
+.sd th:not(:first-child), .sd td:not(:first-child) { text-align: right; }
+.sd-axis text { fill: var(--color-fg-muted); font-size: 11px; }
+
+.sd-seg { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; margin-top: 10px; }
+.sd-seg button { font: inherit; font-size: var(--cds-font-size-caption); padding: 5px 14px; border: 0; background: transparent; color: var(--color-fg-muted); cursor: pointer; }
+.sd-seg button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-panel); }
+
+:root { color-scheme: light dark;
+  --color-fg:#1f1d1a; --color-fg-muted:#6b665e; --color-panel:#ffffff; --color-bg:#f5f3ee; --color-border-line:#e4dfd5;
+  --cds-gap-lg:20px; --cds-gap-md:12px; --cds-radius:10px; --cds-pad-lg:20px; --cds-pad-sm:10px; --cds-pad-xs:6px;
+  --cds-font-size-title:2rem; --cds-font-size-heading:1.05rem; --cds-font-size-body:0.9rem; --cds-font-size-caption:0.78rem; --cds-font-weight-medium:600;
+  --cds-chart-grid:#e9e5dc; --cds-surface-popover:#ffffff; --cds-border:#d8d2c6; --cds-shadow-popover:0 4px 14px rgba(0,0,0,.12); --cds-text-secondary:#6b665e;
+  --font-anthropic-sans:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif; --font-anthropic-serif:"Noto Serif KR",Georgia,serif; }
+@media (prefers-color-scheme: dark) { :root { --color-fg:#f1eee8; --color-fg-muted:#a39d92; --color-panel:#26241f; --color-bg:#1b1a17; --color-border-line:#3a372f; --cds-chart-grid:#33302a; --cds-surface-popover:#2f2c26; --cds-border:#4a463d; --cds-text-secondary:#a39d92; --cds-shadow-popover:0 4px 14px rgba(0,0,0,.5); } }
+html, body { margin:0; background:var(--color-bg); color:var(--color-fg); }
+body { padding:24px 16px 48px; }
+.sd-status { color:var(--color-fg-muted); font-size:var(--cds-font-size-caption); margin-top:6px; }
+.sd-status a { color:inherit; }
+.sd-err { color:#c0392b; }
+</style>
+</head><body>
+<div class="sd">
+  <header>
+    <h1>수강 현황</h1>
+    <p class="sd-sub">노션의 수강 기수와 수업기록을 읽어 보여 줍니다.</p>
+    <p class="sd-status" id="status">불러오는 중…</p>
+    <div class="sd-seg" role="group" aria-label="집계 단위">
+      <button type="button" data-mode="m" aria-pressed="true">월별</button>
+      <button type="button" data-mode="w" aria-pressed="false">주별</button>
+    </div>
+  </header>
+
+  <div class="sd-tiles">
+    <div class="sd-card">
+      <span class="sd-lab">지금 수강 중</span>
+      <b class="sd-big"><span data-draw="n_now" data-source="now" data-field="students" data-where="academy=전체">—</span><span class="sd-unit">명</span></b>
+    </div>
+    <div class="sd-card">
+      <span class="sd-lab">이번 달 수업</span>
+      <b class="sd-big"><span data-draw="n_lessons" data-source="thismonth" data-field="lessons" data-row="0">—</span><span class="sd-unit">건</span></b>
+    </div>
+    <div class="sd-card">
+      <span class="sd-lab">이번 달 수업 시간</span>
+      <b class="sd-big"><span data-draw="n_hours" data-source="thismonth" data-field="hours" data-row="0">—</span><span class="sd-unit">시간</span></b>
+    </div>
+  </div>
+
+  <div class="sd-card">
+    <h2>수강 인원</h2>
+    <p class="sd-note">월별은 그 달, 주별은 그 주(월~일)에 수강 기간이 걸친 학생 수입니다. 다음 달(주)부터는 수업기록의 예정 수업이 있는 학생 수이며 점선으로 표시합니다. 학원이 바뀐 학생은 학원별로 각각 세고, 합계에서는 한 번만 셉니다. 범례를 누르면 선을 켜고 끌 수 있고, 마우스 휠·두 손가락 벌리기·트랙패드 위아래로 확대하고, 드래그나 트랙패드 좌우로 이동합니다.</p>
+    <div class="sd-chart" data-draw="chart_headcount" data-source="headcount"></div>
+  </div>
+
+  <div class="sd-card">
+      <h2>수업 시간</h2>
+      <p class="sd-note">유효 수업(딜레이·당결·전달사항 제외) 기준입니다. 이번 달(주)과 이후는 예정 수업을 포함하므로 점선으로 이어 표시합니다. 범례를 누르면 선을 켜고 끌 수 있고, 마우스 휠·두 손가락 벌리기·트랙패드 위아래로 확대하고, 드래그나 트랙패드 좌우로 이동합니다.</p>
+      <div class="sd-chart" data-draw="chart_hours" data-source="hours"></div>
+    </div>
+
+  <div class="sd-grid">
+    <div class="sd-card">
+      <h2>학원별 진행 중 인원</h2>
+      <p class="sd-note">인원은 종료일이 비어 있는 기수 기준입니다. 시간은 그 학생들에 연결된 '진행 중' 급여정보를 기준으로, 주 시간은 주당시간의 합, 월 시간은 4주로 계산합니다.</p>
+      <table data-source="now" data-row-key="academy">
+        <thead><tr><th data-field="academy">학원</th><th data-field="students">인원</th><th>주 시간</th><th>월 시간</th></tr></thead>
+        <tbody data-draw="tbl_now"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="/d3.min.js"></script>
+<script>
+(function () {
+  const fmt = d3.format(',.1~f');
+  const cur = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 7);
+  const ACAD = [['gangnam', '아베크 강남', '#8b5cf6'], ['jamsil', '아베크 잠실', '#2f80ed'], ['bundang', '아베크 분당', '#e6b800'], ['jtone', '제이톤', '#f2780c'], ['wemusic', '위뮤직', '#2eaa5e'], ['personal', '개인레슨', '#e8589c']];
+  const SERIES = [['total', '합계', 'var(--color-fg)']].concat(ACAD);
+  let DATA = null;
+  const $ = (id) => document.querySelector('[data-draw="' + id + '"]');
+
+  function drawTiles() {
+    const n = DATA.now.find((x) => x.academy === '전체');
+    $('n_now').textContent = n ? fmt(n.students) : '—';
+    $('n_lessons').textContent = fmt(DATA.thismonth.lessons);
+    $('n_hours').textContent = fmt(DATA.thismonth.hours);
+  }
+  function drawTable() {
+    const tb = $('tbl_now');
+    tb.replaceChildren();
+    const pg = DATA.pay;
+    const rank = (n) => (n === '전체' ? -1 : ACAD.findIndex((x) => x[1] === n));
+    [...DATA.now].sort((x, y) => rank(x.academy) - rank(y.academy)).forEach((r) => {
+      const col = (ACAD.find((x) => x[1] === r.academy) || [])[2];
+      const p = pg.find((x) => x.academy === r.academy);
+      const tr = document.createElement('tr');
+      [r.academy, fmt(r.students), p ? fmt(p.week_hours) : '–', p ? fmt(p.month_hours) : '–'].forEach((t, i) => { const td = document.createElement('td'); td.textContent = t; if (i) td.style.textAlign = 'right'; tr.append(td); });
+      if (col) tr.style.color = col;
+      if (r.academy === '전체') tr.style.fontWeight = '600';
+      tb.append(tr);
+    });
+  }
+
+  const lbl = (m) => m.slice(2).replace(/-/g, '.');
+
+  function frame(el, w, h) {
+    el.replaceChildren();
+    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${w} ${h}`).attr('role', 'img');
+    const tip = document.createElement('div');
+    tip.className = 'sd-tip';
+    tip.hidden = true;
+    el.append(tip);
+    return { svg, tip };
+  }
+
+  function axes(svg, x, y, m, w, h, months) {
+    y.ticks(4).forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', w - m.r).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', 'var(--cds-chart-grid)').attr('stroke-width', 1);
+    });
+    const ya = svg.append('g').attr('class', 'sd-axis');
+    y.ticks(4).forEach((t) => ya.append('text').attr('x', m.l - 6).attr('y', y(t) + 4).attr('text-anchor', 'end').text(fmt(t)));
+    const step = Math.max(1, Math.ceil(months.length / Math.max(2, Math.floor((w - m.l - m.r) / 44))));
+    const xa = svg.append('g').attr('class', 'sd-axis');
+    months.forEach((mo, i) => {
+      if (i % step === 0) xa.append('text').attr('x', x(mo) + x.bandwidth() / 2).attr('y', h - 8).attr('text-anchor', 'middle').text(lbl(mo));
+    });
+  }
+
+  function hover(el, svg, tip, x, m, h, months, content) {
+    months.forEach((mo) => {
+      svg.append('rect').attr('x', x(mo) - x.step() * x.paddingInner() / 2).attr('y', m.t).attr('width', x.step()).attr('height', h - m.t - m.b)
+        .attr('fill', 'transparent')
+        .on('mousemove', (ev) => {
+          tip.replaceChildren(...content(mo));
+          tip.hidden = false;
+          const box = el.getBoundingClientRect();
+          const left = ev.clientX - box.left + 12;
+          tip.style.left = Math.max(0, Math.min(left, box.width - tip.offsetWidth)) + 'px';
+          tip.style.top = Math.max(0, ev.clientY - box.top - 40) + 'px';
+        })
+        .on('mouseleave', () => { tip.hidden = true; });
+    });
+  }
+
+  const line = (cls, text, color) => {
+    const p = document.createElement('div');
+    if (cls) p.className = cls;
+    if (color) { const s = document.createElement('i'); s.style.background = color; p.append(s); }
+    p.append(document.createTextNode(text));
+    return p;
+  };
+
+  let mode = 'm';
+  const curWeek = () => { const d = new Date(Date.now() + 9 * 3600 * 1000); const dow = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - dow); return d.toISOString().slice(0, 10); };
+  const weekRows = (a, b, fill) => {
+    const src = [...a, ...b].map((r) => Object.assign({}, r, { month: r.week }));
+    if (!fill) return src;
+    const by = new Map(src.map((r) => [r.month, r]));
+    const out = [];
+    const last = src.reduce((m, r) => (r.month > m ? r.month : m), '2024-01-01');
+    for (let d = new Date('2024-01-01T00:00:00Z'); d.toISOString().slice(0, 10) <= last; d.setUTCDate(d.getUTCDate() + 7)) {
+      const k = d.toISOString().slice(0, 10);
+      out.push(by.get(k) || { month: k, lessons: 0, total: 0, gangnam: 0, jamsil: 0, bundang: 0, jtone: 0, wemusic: 0, personal: 0 });
+    }
+    return out;
+  };
+  const off = new Set();
+  function setupZoom(el) {
+    if (el._zoomed) return;
+    el._zoomed = true;
+    const MIN = 6;
+    const apply = (z) => {
+      const n = z.n;
+      z.len = Math.max(Math.min(MIN, n), Math.min(n, z.len));
+      z.s = Math.max(0, Math.min(z.s, n - z.len));
+      z.i0 = Math.round(z.s);
+      z.i1 = Math.min(n - 1, z.i0 + Math.round(z.len) - 1);
+    };
+    let raf = 0;
+    const redraw = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; if (el._ctx) lineChart(el, el._ctx.all, el._ctx.opt); });
+    };
+    const zoomTo = (len, frac) => {
+      const z = el._z;
+      const c = z.s + frac * z.len;
+      z.len = len;
+      z.s = c - frac * len;
+      apply(z);
+      redraw();
+    };
+    const panBy = (months) => { const z = el._z; z.s += months; apply(z); redraw(); };
+    const plotW = () => Math.max(1, el.getBoundingClientRect().width - 50);
+    const fracOf = (cx) => {
+      const r = el.getBoundingClientRect();
+      return Math.max(0, Math.min(1, (cx - r.left - 38) / plotW()));
+    };
+    let axis = null, axisTimer = 0;
+    el.addEventListener('wheel', (ev) => {
+      if (!el._z) return;
+      ev.preventDefault();
+      const z = el._z;
+      if (ev.ctrlKey) {
+        zoomTo(z.len * Math.exp(Math.max(-30, Math.min(30, ev.deltaY)) * 0.012), fracOf(ev.clientX));
+        return;
+      }
+      const mouse = ev.deltaMode !== 0 || (ev.deltaX === 0 && Math.abs(ev.deltaY) >= 50 && Number.isInteger(ev.deltaY));
+      if (mouse) {
+        zoomTo(z.len * Math.exp(Math.sign(ev.deltaY) * 0.18), fracOf(ev.clientX));
+        return;
+      }
+      if (!axis) axis = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? 'x' : 'y';
+      clearTimeout(axisTimer);
+      axisTimer = setTimeout(() => { axis = null; }, 160);
+      if (axis === 'x') panBy(ev.deltaX * z.len / plotW());
+      else zoomTo(z.len * Math.exp(Math.max(-40, Math.min(40, ev.deltaY)) * 0.005), fracOf(ev.clientX));
+    }, { passive: false });
+
+    const ptrs = new Map();
+    let pinch = null, dragPrev = null;
+    const startPinch = () => {
+      const v = [...ptrs.values()];
+      pinch = { span: Math.max(20, Math.abs(v[0] - v[1])), len: el._z.len, s: el._z.s, mid: (v[0] + v[1]) / 2 };
+      pinch.frac = fracOf(pinch.mid);
+      pinch.center = pinch.s + pinch.frac * pinch.len;
+    };
+    el.addEventListener('pointerdown', (ev) => {
+      if (ev.target.closest && ev.target.closest('.sd-legend')) return;
+      ptrs.set(ev.pointerId, ev.clientX);
+      try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+      if (ptrs.size === 2) startPinch();
+      else { pinch = null; dragPrev = ev.clientX; }
+    });
+    el.addEventListener('pointermove', (ev) => {
+      if (!ptrs.has(ev.pointerId) || !el._z) return;
+      ptrs.set(ev.pointerId, ev.clientX);
+      const z = el._z;
+      if (ptrs.size >= 2 && pinch) {
+        const v = [...ptrs.values()];
+        const span = Math.max(20, Math.abs(v[0] - v[1]));
+        const len = pinch.len * Math.pow(pinch.span / span, 1.8);
+        const mid = (v[0] + v[1]) / 2;
+        z.len = len;
+        z.s = pinch.center - pinch.frac * len - ((mid - pinch.mid) / plotW()) * len;
+        apply(z);
+        redraw();
+      } else if (ptrs.size === 1 && dragPrev != null && z.len < z.n) {
+        const dx = ev.clientX - dragPrev;
+        dragPrev = ev.clientX;
+        panBy(-dx * z.len / plotW());
+      }
+    });
+    const up = (ev) => {
+      ptrs.delete(ev.pointerId);
+      pinch = null;
+      dragPrev = ptrs.size === 1 ? [...ptrs.values()][0] : null;
+    };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  }
+
+  function lineChart(el, all, opt) {
+    el._ctx = { all, opt };
+    if (!el._z || el._z.n !== all.length) {
+      el._z = { s: 0, len: all.length, i0: 0, i1: all.length - 1, n: all.length };
+      if (opt.initial && all.length > opt.initial) {
+        const z = el._z;
+        z.s = all.length - opt.initial; z.len = opt.initial; z.i0 = Math.round(z.s); z.i1 = all.length - 1;
+      }
+    }
+    const zoomedIn = el._z.i1 - el._z.i0 + 1 < all.length;
+    const rows = all.slice(el._z.i0, el._z.i1 + 1);
+    el.style.touchAction = 'pan-y';
+    setupZoom(el);
+    const w = Math.max(300, el.clientWidth), hh = 300, m = { t: 10, r: 12, b: 30, l: 38 };
+    const { svg, tip } = frame(el, w, hh);
+    const months = rows.map((r) => r.month);
+    const x = d3.scaleBand(months, [m.l, w - m.r]).padding(0.1);
+    const on = SERIES.filter((s) => !off.has(s[0]) && rows.some((r) => r[s[0]]));
+    const ymax = d3.max(rows, (r) => d3.max(SERIES.filter((s) => !off.has(s[0])), (s) => +r[s[0]] || 0)) || 1;
+    const y = d3.scaleLinear([0, ymax], [hh - m.b, m.t]).nice();
+    axes(svg, x, y, m, w, hh, months);
+    SERIES.filter((s) => !off.has(s[0])).sort((p, q) => (p[0] === 'total') - (q[0] === 'total')).forEach((s) => {
+      const key = s[0], col = s[2], isT = key === 'total';
+      let f = -1, l = -1;
+      rows.forEach((r, i) => { if ((+r[key] || 0) > 0) { if (f < 0) f = i; l = i; } });
+      const pts = rows.map((r, i) => [x(r.month) + x.bandwidth() / 2, y(+r[key] || 0), r.month]).filter((p, i) => i >= f && i <= l);
+      const seg = (p) => d3.line()(p.map((q) => [q[0], q[1]]));
+      const past = pts.filter((p) => !opt.future || p[2] < opt.future);
+      const fut = opt.future ? pts.filter((p) => p[2] >= opt.future) : [];
+      const bridge = fut.length && past.length ? [past[past.length - 1]].concat(fut) : fut;
+      const st = { fill: 'none', stroke: col, 'stroke-width': 1.8, 'stroke-linejoin': 'round' };
+      if (past.length) svg.append('path').attr('d', seg(past)).attr('opacity', isT ? 1 : 0.95).each(function () { Object.entries(st).forEach(([k, v]) => this.setAttribute(k, v)); });
+      if (bridge.length > 1) svg.append('path').attr('d', seg(bridge)).attr('stroke-dasharray', '5 4').each(function () { Object.entries(st).forEach(([k, v]) => this.setAttribute(k, v)); });
+    });
+    hover(el, svg, tip, x, m, hh, months, (mo) => {
+      const r = rows.find((q) => q.month === mo);
+      const fut = opt.future && mo >= opt.future;
+      return [line('t', (opt.weekly ? `${mo} 주` : mo) + (fut ? ' (예정 포함)' : ''))].concat(SERIES.filter((s) => !off.has(s[0]) && r[s[0]] > 0).map((s) => line('', `${s[1]} ${fmt(r[s[0]])}${opt.unit}`, s[2] === 'var(--color-fg)' ? 'currentColor' : s[2])));
+    });
+    const lg = document.createElement('div');
+    lg.className = 'sd-legend';
+    SERIES.forEach((s) => {
+      if (!rows.some((r) => r[s[0]])) return;
+      const sp = document.createElement('span');
+      sp.style.cursor = 'pointer';
+      sp.style.opacity = off.has(s[0]) ? 0.35 : 1;
+      const sw = document.createElement('i');
+      sw.style.background = s[2] === 'var(--color-fg)' ? 'currentColor' : s[2];
+      sp.append(sw, document.createTextNode(s[1]));
+      sp.onclick = () => { off.has(s[0]) ? off.delete(s[0]) : off.add(s[0]); lineChart(el, all, opt); };
+      lg.append(sp);
+    });
+    if (zoomedIn) {
+      const rs = document.createElement('span');
+      rs.style.cursor = 'pointer';
+      rs.textContent = '전체 보기';
+      rs.onclick = () => { el._z = null; lineChart(el, all, opt); };
+      lg.append(rs);
+    }
+    el.append(lg);
+  }
+  const nextMonth = () => { const [y, m] = cur().split('-').map(Number); return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`; };
+  const nextWeek = () => { const d = new Date(curWeek() + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 7); return d.toISOString().slice(0, 10); };
+
+  function drawCharts() {
+    const hc = $('chart_headcount'), hr = $('chart_hours');
+    if (mode === 'w') {
+      const past = weekRows(DATA.headcount.weekly, [], false);
+      const fut = DATA.headcount.futureWeekly.map((r) => Object.assign({}, r, { month: r.week }));
+      lineChart(hc, past.concat(fut), { unit: '명', weekly: true, initial: 52, future: nextWeek() });
+      lineChart(hr, weekRows(DATA.hours.weekly, [], true), { unit: '시간', future: curWeek(), weekly: true, initial: 52 });
+    } else {
+      lineChart(hc, DATA.headcount.monthly.concat(DATA.headcount.futureMonthly), { unit: '명', future: nextMonth() });
+      lineChart(hr, DATA.hours.monthly, { unit: '시간', future: cur() });
+    }
+  }
+  function drawAll() { drawTiles(); drawTable(); drawCharts(); }
+
+  document.querySelectorAll('.sd-seg button').forEach((bt) => {
+    bt.addEventListener('click', () => {
+      mode = bt.dataset.mode;
+      document.querySelectorAll('.sd-seg button').forEach((x) => x.setAttribute('aria-pressed', String(x === bt)));
+      document.querySelectorAll('.sd-chart').forEach((c) => { c._z = null; });
+      if (DATA) drawCharts();
+    });
+  });
+  let rt = 0;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (DATA) drawCharts(); }, 150); });
+
+  const status = document.getElementById('status');
+  async function loadData(refresh) {
+    status.textContent = '불러오는 중…';
+    status.classList.remove('sd-err');
+    try {
+      const r = await fetch('/api/data' + (refresh ? '?refresh=1' : ''), { cache: 'no-store' });
+      if (!r.ok) throw new Error((await r.text()).slice(0, 200) || r.status);
+      DATA = await r.json();
+      drawAll();
+      const t = new Date(DATA.updatedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+      status.textContent = '마지막 갱신 ' + t + (DATA.stale ? ' (노션 조회 실패, 이전 데이터)' : '') + ' · ';
+      if (DATA.stale) status.classList.add('sd-err');
+      const a = document.createElement('a');
+      a.href = '#'; a.textContent = '새로고침';
+      a.onclick = (e) => { e.preventDefault(); loadData(true); };
+      status.append(a);
+    } catch (e) {
+      status.textContent = '불러오지 못했습니다: ' + e.message;
+      status.classList.add('sd-err');
+    }
+  }
+  loadData(false);
+})();
+</script>
+
+</body></html>

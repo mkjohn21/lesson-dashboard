@@ -1,0 +1,26 @@
+# GitHub 푸시 -> Cloud Build 트리거 -> Cloud Run 배포
+# 시크릿(NOTION_TOKEN, DASHBOARD_KEY)은 Secret Manager에서 읽는다.
+substitutions:
+  _REGION: asia-northeast3
+  _SERVICE: lesson-dashboard
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_SERVICE}:$COMMIT_SHA', '.']
+  - name: gcr.io/cloud-builders/docker
+    args: ['push', '${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_SERVICE}:$COMMIT_SHA']
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_SERVICE}:$COMMIT_SHA
+      - --region=${_REGION}
+      - --allow-unauthenticated
+      - --max-instances=2
+      - --memory=512Mi
+      - --set-secrets=NOTION_TOKEN=NOTION_TOKEN:latest,DASHBOARD_KEY=DASHBOARD_KEY:latest
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/${_SERVICE}:$COMMIT_SHA
+options:
+  logging: CLOUD_LOGGING_ONLY

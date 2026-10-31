@@ -1,0 +1,18 @@
+{
+  "name": "lesson-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "수강 현황 대시보드 (노션 API 직접 조회, Cloud Run 배포)",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/compute.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "d3": "7.9.0"
+  }
+}
