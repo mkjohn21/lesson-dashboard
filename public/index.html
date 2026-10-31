@@ -71,13 +71,13 @@ body { padding:24px 16px 48px; }
 
   <div class="sd-card">
     <h2>수강 인원</h2>
-    <p class="sd-note">월별은 그 달, 주별은 그 주(월~일)에 수강 기간이 걸친 학생 수입니다. 다음 달(주)부터는 수업기록의 예정 수업이 있는 학생 수이며 점선으로 표시합니다. 학원이 바뀐 학생은 학원별로 각각 세고, 합계에서는 한 번만 셉니다. 범례를 누르면 선을 켜고 끌 수 있고, 두 손가락 벌리기·트랙패드 핀치(마우스는 Ctrl+휠)로 확대하고, 드래그나 트랙패드 두 손가락 좌우로 이동합니다.</p>
+    <p class="sd-note">월별은 그 달, 주별은 그 주(월~일)에 수강 기간이 걸친 학생 수입니다. 다음 달(주)부터는 수업기록의 예정 수업이 있는 학생 수이며 점선으로 표시합니다. 학원이 바뀐 학생은 학원별로 각각 세고, 합계에서는 한 번만 셉니다. 범례의 '월 평균'을 켜면 그 달의 주별 평균이 진한 계단선으로 나타나고 주별 선은 옅어집니다. 범례를 누르면 선을 켜고 끌 수 있고, 두 손가락 벌리기·트랙패드 핀치(마우스는 Ctrl+휠)로 확대하고, 드래그나 트랙패드 두 손가락 좌우로 이동합니다.</p>
     <div class="sd-chart" data-draw="chart_headcount" data-source="headcount"></div>
   </div>
 
   <div class="sd-card">
       <h2>수업 시간</h2>
-      <p class="sd-note">유효 수업(딜레이·당결·전달사항 제외) 기준입니다. 이번 달(주)과 이후는 예정 수업을 포함하므로 점선으로 이어 표시합니다. 범례를 누르면 선을 켜고 끌 수 있고, 두 손가락 벌리기·트랙패드 핀치(마우스는 Ctrl+휠)로 확대하고, 드래그나 트랙패드 두 손가락 좌우로 이동합니다.</p>
+      <p class="sd-note">유효 수업(딜레이·당결·전달사항 제외) 기준입니다. 이번 달(주)과 이후는 예정 수업을 포함하므로 점선으로 이어 표시합니다. 범례의 '월 평균'을 켜면 그 달의 주별 평균이 진한 계단선으로 나타나고 주별 선은 옅어집니다. 범례를 누르면 선을 켜고 끌 수 있고, 두 손가락 벌리기·트랙패드 핀치(마우스는 Ctrl+휠)로 확대하고, 드래그나 트랙패드 두 손가락 좌우로 이동합니다.</p>
       <div class="sd-chart" data-draw="chart_hours" data-source="hours"></div>
     </div>
 
@@ -189,6 +189,7 @@ body { padding:24px 16px 48px; }
     return out;
   };
   const off = new Set();
+  let avgOn = false;
   function setupZoom(el) {
     if (el._zoomed) return;
     el._zoomed = true;
@@ -307,6 +308,29 @@ body { padding:24px 16px 48px; }
     const cid = 'clip' + Math.random().toString(36).slice(2, 8);
     svg.append('clipPath').attr('id', cid).append('rect').attr('x', m.l).attr('y', 0).attr('width', w - m.l - m.r).attr('height', hh);
     const gl = svg.append('g').attr('clip-path', `url(#${cid})`);
+    if (opt.weekly && avgOn) {
+      const xc = (gi) => startX + (gi - off0) * stepW + x.bandwidth() / 2;
+      SERIES.filter((s) => !off.has(s[0])).forEach((s) => {
+        const key = s[0];
+        let f = -1, l = -1;
+        all.forEach((r, i) => { if ((+r[key] || 0) > 0) { if (f < 0) f = i; l = i; } });
+        if (f < 0) return;
+        const groups = [];
+        for (let i = f; i <= l; i++) {
+          const mo = all[i].month.slice(0, 7);
+          const g = groups[groups.length - 1];
+          if (g && g.mo === mo) { g.b = i; g.sum += +all[i][key] || 0; g.n += 1; }
+          else groups.push({ mo, a: i, b: i, sum: +all[i][key] || 0, n: 1 });
+        }
+        let d = '';
+        groups.forEach((g, k) => {
+          const yy = y(g.sum / g.n), xl = xc(g.a) - stepW / 2, xr = xc(g.b) + stepW / 2;
+          d += k === 0 ? `M${xl},${yy}` : `L${xl},${yy}`;
+          d += `L${xr},${yy}`;
+        });
+        gl.append('path').attr('d', d).attr('fill', 'none').attr('stroke', s[2]).attr('stroke-width', 1.8).attr('stroke-opacity', 0.95).attr('stroke-linejoin', 'miter');
+      });
+    }
     SERIES.filter((s) => !off.has(s[0])).sort((p, q) => (p[0] === 'total') - (q[0] === 'total')).forEach((s) => {
       const key = s[0], col = s[2], isT = key === 'total';
       let f = -1, l = -1;
@@ -316,8 +340,9 @@ body { padding:24px 16px 48px; }
       const past = pts.filter((p) => !opt.future || p[2] < opt.future);
       const fut = opt.future ? pts.filter((p) => p[2] >= opt.future) : [];
       const bridge = fut.length && past.length ? [past[past.length - 1]].concat(fut) : fut;
-      const st = { fill: 'none', stroke: col, 'stroke-width': 1.8, 'stroke-linejoin': 'round' };
-      if (past.length) gl.append('path').attr('d', seg(past)).attr('opacity', isT ? 1 : 0.95).each(function () { Object.entries(st).forEach(([k, v]) => this.setAttribute(k, v)); });
+      const swap = opt.weekly && avgOn;
+      const st = { fill: 'none', stroke: col, 'stroke-width': 1.8, 'stroke-opacity': swap ? 0.18 : 1, 'stroke-linejoin': 'round' };
+      if (past.length) gl.append('path').attr('d', seg(past)).each(function () { Object.entries(st).forEach(([k, v]) => this.setAttribute(k, v)); });
       if (bridge.length > 1) gl.append('path').attr('d', seg(bridge)).attr('stroke-dasharray', '5 4').each(function () { Object.entries(st).forEach(([k, v]) => this.setAttribute(k, v)); });
     });
     hover(el, svg, tip, x, m, hh, months, (mo) => {
@@ -338,6 +363,14 @@ body { padding:24px 16px 48px; }
       sp.onclick = () => { off.has(s[0]) ? off.delete(s[0]) : off.add(s[0]); lineChart(el, all, opt); };
       lg.append(sp);
     });
+    if (opt.weekly) {
+      const ap = document.createElement('span');
+      ap.style.cursor = 'pointer';
+      ap.style.opacity = avgOn ? 1 : 0.35;
+      ap.textContent = '▭ 월 평균';
+      ap.onclick = () => { avgOn = !avgOn; lineChart(el, all, opt); };
+      lg.append(ap);
+    }
     if (zoomedIn) {
       const rs = document.createElement('span');
       rs.style.cursor = 'pointer';
