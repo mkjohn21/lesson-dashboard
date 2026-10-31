@@ -188,6 +188,8 @@ body { padding:24px 16px 48px; }
     }
     return out;
   };
+  const ZORD = ['wemusic', 'jtone', 'personal', 'bundang', 'jamsil', 'gangnam', 'total'];
+  const byZ = (p, q) => ZORD.indexOf(p[0]) - ZORD.indexOf(q[0]);
   const off = new Set();
   let avgOn = false;
   function setupZoom(el) {
@@ -310,7 +312,7 @@ body { padding:24px 16px 48px; }
     const gl = svg.append('g').attr('clip-path', `url(#${cid})`);
     if (opt.weekly && avgOn) {
       const xc = (gi) => startX + (gi - off0) * stepW + x.bandwidth() / 2;
-      SERIES.filter((s) => !off.has(s[0])).forEach((s) => {
+      SERIES.filter((s) => !off.has(s[0])).sort(byZ).forEach((s) => {
         const key = s[0];
         let f = -1, l = -1;
         all.forEach((r, i) => { if ((+r[key] || 0) > 0) { if (f < 0) f = i; l = i; } });
@@ -331,7 +333,7 @@ body { padding:24px 16px 48px; }
         gl.append('path').attr('d', d).attr('fill', 'none').attr('stroke', s[2]).attr('stroke-width', 1.8).attr('stroke-opacity', 0.95).attr('stroke-linejoin', 'miter');
       });
     }
-    SERIES.filter((s) => !off.has(s[0])).sort((p, q) => (p[0] === 'total') - (q[0] === 'total')).forEach((s) => {
+    SERIES.filter((s) => !off.has(s[0])).sort(byZ).forEach((s) => {
       const key = s[0], col = s[2], isT = key === 'total';
       let f = -1, l = -1;
       all.forEach((r, i) => { if ((+r[key] || 0) > 0) { if (f < 0) f = i; l = i; } });
@@ -348,7 +350,16 @@ body { padding:24px 16px 48px; }
     hover(el, svg, tip, x, m, hh, months, (mo) => {
       const r = rows.find((q) => q.month === mo);
       const fut = opt.future && mo >= opt.future;
-      return [line('t', (opt.weekly ? `${mo} 주` : mo) + (fut ? ' (예정 포함)' : ''))].concat(SERIES.filter((s) => !off.has(s[0]) && r[s[0]] > 0).map((s) => line('', `${s[1]} ${fmt(r[s[0]])}${opt.unit}`, s[2] === 'var(--color-fg)' ? 'currentColor' : s[2])));
+      const rowsT = SERIES.filter((s) => !off.has(s[0]) && r[s[0]] > 0).map((s) => line('', `${s[1]} ${fmt(r[s[0]])}${opt.unit}`, s[2] === 'var(--color-fg)' ? 'currentColor' : s[2]));
+      if (opt.weekly && !off.has('total') && r.total > 0) {
+        let f = -1, l = -1;
+        all.forEach((q, i) => { if ((+q.total || 0) > 0) { if (f < 0) f = i; l = i; } });
+        const mm = mo.slice(0, 7);
+        const ws = all.filter((q, i) => i >= f && i <= l && q.month.slice(0, 7) === mm);
+        const avg = ws.reduce((a, q) => a + (+q.total || 0), 0) / Math.max(1, ws.length);
+        rowsT.splice(1, 0, line('t', `${Number(mm.slice(5))}월 평균: ${fmt(avg)}${opt.unit}`));
+      }
+      return [line('t', (opt.weekly ? `${mo} 주` : mo) + (fut ? ' (예정 포함)' : ''))].concat(rowsT);
     });
     const lg = document.createElement('div');
     lg.className = 'sd-legend';
