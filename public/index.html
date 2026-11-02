@@ -195,8 +195,8 @@ header .sd-sub, header .sd-status, header .sd-seg { margin: 0; }
     if (!fill) return src;
     const by = new Map(src.map((r) => [r.month, r]));
     const out = [];
-    const last = src.reduce((m, r) => (r.month > m ? r.month : m), '2024-01-01');
-    for (let d = new Date('2024-01-01T00:00:00Z'); d.toISOString().slice(0, 10) <= last; d.setUTCDate(d.getUTCDate() + 7)) {
+    const last = src.reduce((m, r) => (r.month > m ? r.month : m), '2023-05-01');
+    for (let d = new Date('2023-05-01T00:00:00Z'); d.toISOString().slice(0, 10) <= last; d.setUTCDate(d.getUTCDate() + 7)) {
       const k = d.toISOString().slice(0, 10);
       out.push(by.get(k) || { month: k, lessons: 0, total: 0, gangnam: 0, jamsil: 0, bundang: 0, jtone: 0, wemusic: 0, personal: 0 });
     }
