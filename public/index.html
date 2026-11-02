@@ -444,7 +444,7 @@ header .sd-sub, header .sd-status, header .sd-seg { margin: 0; }
       if (!r.ok) throw new Error((await r.text()).slice(0, 200) || r.status);
       DATA = await r.json();
       drawAll();
-      const t = new Date(DATA.updatedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+      const t = new Date(DATA.updatedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hourCycle: 'h23' });
       status.textContent = '마지막 갱신 ' + t + (DATA.stale ? ' (노션 조회 실패, 이전 데이터)' : DATA.refreshing ? ' (최신 데이터를 읽는 중, 잠시 뒤 새로고침)' : '') + ' · ';
       if (DATA.stale) status.classList.add('sd-err');
       const a = document.createElement('a');
