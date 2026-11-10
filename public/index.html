@@ -55,12 +55,10 @@ header .sd-sub, header .sd-status, header .sd-seg { margin: 0; }
 .sd-tiles .sd-lab { white-space: nowrap; }
 .sd .sd-tiles .sd-big { font-size: 1.35rem; line-height: 1.2; white-space: nowrap; }
 .sd-tiles .sd-unit { font-size: var(--cds-font-size-caption); margin-left: 2px; }
-.sd-tiles { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)); }
 .sd-tiles .sd-card { flex-wrap: wrap; row-gap: 2px; }
-.sd-sw { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; align-self: center; }
-.sd-sw button { font: inherit; font-size: 0.7rem; padding: 1px 7px; border: 0; background: transparent; color: var(--color-fg-muted); cursor: pointer; }
-.sd-sw button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-panel); }
-.sd-v-h .sd-vc, .sd-v-c .sd-vh { display: none; }
+.sd-flip { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+.sd-flip:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.sd-m .sd-va, .sd-a .sd-vm { display: none; }
 </style>
 </head><body>
 <div class="sd">
@@ -74,30 +72,27 @@ header .sd-sub, header .sd-status, header .sd-seg { margin: 0; }
     <p class="sd-status" id="status">불러오는 중…</p>
   </header>
 
-  <div class="sd-tiles">
-    <div class="sd-card">
-      <span class="sd-lab">지금 수강 중</span>
-      <b class="sd-big"><span data-draw="n_now">—</span><span class="sd-unit">명</span></b>
-    </div>
-    <div class="sd-card sd-tg2 sd-v-h">
-      <span class="sd-lab">이번 달 수업</span>
+  <div class="sd-tiles sd-m" role="group" aria-label="요약 (누르면 이번 달과 누적이 바뀝니다)">
+    <div class="sd-card sd-flip" role="button" tabindex="0" aria-pressed="false" title="누르면 누적 값으로 바뀝니다">
+      <span class="sd-lab"><span class="sd-vm">지금 수강 중</span><span class="sd-va">누적 학생</span></span>
       <b class="sd-big">
-        <span class="sd-vh"><span data-draw="n_hours">—</span><span class="sd-unit">시간</span></span>
-        <span class="sd-vc"><span data-draw="n_lessons">—</span><span class="sd-unit">건</span></span>
+        <span class="sd-vm"><span data-draw="n_now">—</span><span class="sd-unit">명</span></span>
+        <span class="sd-va"><span data-draw="n_students_all">—</span><span class="sd-unit">명</span></span>
       </b>
-      <span class="sd-sw" role="group" aria-label="이번 달 수업 표시 단위"><button type="button" data-v="h" aria-pressed="true">시간</button><button type="button" data-v="c" aria-pressed="false">건수</button></span>
     </div>
-    <div class="sd-card">
-      <span class="sd-lab" title="오늘(KST)의 모든 수업을 마쳤을 때까지, 오늘 예정된 수업도 포함한 유효 수업 기준입니다.">지금까지 가르친 학생</span>
-      <b class="sd-big"><span data-draw="n_students_all">—</span><span class="sd-unit">명</span></b>
-    </div>
-    <div class="sd-card sd-tg2 sd-v-h">
-      <span class="sd-lab" title="오늘(KST)의 모든 수업을 마쳤을 때까지, 오늘 예정된 수업도 포함한 유효 수업 기준입니다.">지금까지 수업</span>
+    <div class="sd-card sd-flip" role="button" tabindex="0" aria-pressed="false" title="누르면 누적 값으로 바뀝니다">
+      <span class="sd-lab"><span class="sd-vm">이번 달 수업 건수</span><span class="sd-va">누적 수업 건수</span></span>
       <b class="sd-big">
-        <span class="sd-vh"><span data-draw="n_hours_all">—</span><span class="sd-unit">시간</span></span>
-        <span class="sd-vc"><span data-draw="n_lessons_all">—</span><span class="sd-unit">건</span></span>
+        <span class="sd-vm"><span data-draw="n_lessons">—</span><span class="sd-unit">건</span></span>
+        <span class="sd-va"><span data-draw="n_lessons_all">—</span><span class="sd-unit">건</span></span>
       </b>
-      <span class="sd-sw" role="group" aria-label="지금까지 수업 표시 단위"><button type="button" data-v="h" aria-pressed="true">시간</button><button type="button" data-v="c" aria-pressed="false">건수</button></span>
+    </div>
+    <div class="sd-card sd-flip" role="button" tabindex="0" aria-pressed="false" title="누르면 누적 값으로 바뀝니다">
+      <span class="sd-lab"><span class="sd-vm">이번 달 수업 시간</span><span class="sd-va">누적 수업 시간</span></span>
+      <b class="sd-big">
+        <span class="sd-vm"><span data-draw="n_hours">—</span><span class="sd-unit">시간</span></span>
+        <span class="sd-va"><span data-draw="n_hours_all">—</span><span class="sd-unit">시간</span></span>
+      </b>
     </div>
   </div>
 
@@ -144,12 +139,16 @@ header .sd-sub, header .sd-status, header .sd-seg { margin: 0; }
     $('n_lessons_all').textContent = fmt(DATA.alltime.lessons);
     $('n_hours_all').textContent = fmt(DATA.alltime.hours);
   }
-  document.querySelectorAll('.sd-tg2 .sd-sw button').forEach((bt) => {
-    bt.addEventListener('click', () => {
-      const card = bt.closest('.sd-tg2');
-      card.classList.toggle('sd-v-h', bt.dataset.v === 'h');
-      card.classList.toggle('sd-v-c', bt.dataset.v === 'c');
-      card.querySelectorAll('.sd-sw button').forEach((x) => x.setAttribute('aria-pressed', String(x === bt)));
+  document.querySelectorAll('.sd-tiles').forEach((box) => {
+    const flip = () => {
+      const toAll = box.classList.contains('sd-m');
+      box.classList.toggle('sd-m', !toAll);
+      box.classList.toggle('sd-a', toAll);
+      box.querySelectorAll('.sd-flip').forEach((c) => c.setAttribute('aria-pressed', String(toAll)));
+    };
+    box.querySelectorAll('.sd-flip').forEach((c) => {
+      c.addEventListener('click', flip);
+      c.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
     });
   });
   function drawTable() {
