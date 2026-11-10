@@ -55,6 +55,12 @@ header .sd-sub, header .sd-status, header .sd-seg { margin: 0; }
 .sd-tiles .sd-lab { white-space: nowrap; }
 .sd .sd-tiles .sd-big { font-size: 1.35rem; line-height: 1.2; white-space: nowrap; }
 .sd-tiles .sd-unit { font-size: var(--cds-font-size-caption); margin-left: 2px; }
+.sd-tiles { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)); }
+.sd-tiles .sd-card { flex-wrap: wrap; row-gap: 2px; }
+.sd-sw { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; align-self: center; }
+.sd-sw button { font: inherit; font-size: 0.7rem; padding: 1px 7px; border: 0; background: transparent; color: var(--color-fg-muted); cursor: pointer; }
+.sd-sw button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-panel); }
+.sd-v-h .sd-vc, .sd-v-c .sd-vh { display: none; }
 </style>
 </head><body>
 <div class="sd">
@@ -71,15 +77,27 @@ header .sd-sub, header .sd-status, header .sd-seg { margin: 0; }
   <div class="sd-tiles">
     <div class="sd-card">
       <span class="sd-lab">지금 수강 중</span>
-      <b class="sd-big"><span data-draw="n_now" data-source="now" data-field="students" data-where="academy=전체">—</span><span class="sd-unit">명</span></b>
+      <b class="sd-big"><span data-draw="n_now">—</span><span class="sd-unit">명</span></b>
     </div>
-    <div class="sd-card">
+    <div class="sd-card sd-tg2 sd-v-h">
       <span class="sd-lab">이번 달 수업</span>
-      <b class="sd-big"><span data-draw="n_lessons" data-source="thismonth" data-field="lessons" data-row="0">—</span><span class="sd-unit">건</span></b>
+      <b class="sd-big">
+        <span class="sd-vh"><span data-draw="n_hours">—</span><span class="sd-unit">시간</span></span>
+        <span class="sd-vc"><span data-draw="n_lessons">—</span><span class="sd-unit">건</span></span>
+      </b>
+      <span class="sd-sw" role="group" aria-label="이번 달 수업 표시 단위"><button type="button" data-v="h" aria-pressed="true">시간</button><button type="button" data-v="c" aria-pressed="false">건수</button></span>
     </div>
     <div class="sd-card">
-      <span class="sd-lab">이번 달 수업 시간</span>
-      <b class="sd-big"><span data-draw="n_hours" data-source="thismonth" data-field="hours" data-row="0">—</span><span class="sd-unit">시간</span></b>
+      <span class="sd-lab" title="오늘(KST)의 모든 수업을 마쳤을 때까지, 오늘 예정된 수업도 포함한 유효 수업 기준입니다.">지금까지 가르친 학생</span>
+      <b class="sd-big"><span data-draw="n_students_all">—</span><span class="sd-unit">명</span></b>
+    </div>
+    <div class="sd-card sd-tg2 sd-v-h">
+      <span class="sd-lab" title="오늘(KST)의 모든 수업을 마쳤을 때까지, 오늘 예정된 수업도 포함한 유효 수업 기준입니다.">지금까지 수업</span>
+      <b class="sd-big">
+        <span class="sd-vh"><span data-draw="n_hours_all">—</span><span class="sd-unit">시간</span></span>
+        <span class="sd-vc"><span data-draw="n_lessons_all">—</span><span class="sd-unit">건</span></span>
+      </b>
+      <span class="sd-sw" role="group" aria-label="지금까지 수업 표시 단위"><button type="button" data-v="h" aria-pressed="true">시간</button><button type="button" data-v="c" aria-pressed="false">건수</button></span>
     </div>
   </div>
 
@@ -122,7 +140,18 @@ header .sd-sub, header .sd-status, header .sd-seg { margin: 0; }
     $('n_now').textContent = n ? fmt(n.students) : '—';
     $('n_lessons').textContent = fmt(DATA.thismonth.lessons);
     $('n_hours').textContent = fmt(DATA.thismonth.hours);
+    $('n_students_all').textContent = fmt(DATA.alltime.students);
+    $('n_lessons_all').textContent = fmt(DATA.alltime.lessons);
+    $('n_hours_all').textContent = fmt(DATA.alltime.hours);
   }
+  document.querySelectorAll('.sd-tg2 .sd-sw button').forEach((bt) => {
+    bt.addEventListener('click', () => {
+      const card = bt.closest('.sd-tg2');
+      card.classList.toggle('sd-v-h', bt.dataset.v === 'h');
+      card.classList.toggle('sd-v-c', bt.dataset.v === 'c');
+      card.querySelectorAll('.sd-sw button').forEach((x) => x.setAttribute('aria-pressed', String(x === bt)));
+    });
+  });
   function drawTable() {
     const tb = $('tbl_now');
     tb.replaceChildren();
